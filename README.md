@@ -72,8 +72,9 @@ Be sure to specify `index_col=0` to avoid creating an "Unnamed: 0" column.
 
 
 ```python
-# Your code here
-
+import pandas as pd
+diamonds = pd.read_csv("diamonds.csv", index_col=0)
+diamonds
 ```
 
 The following code checks that you loaded the data correctly:
@@ -121,6 +122,7 @@ The target variable is `price`. Look at the correlation coefficients for all of 
 
 ```python
 # Your code here - look at correlations
+diamonds.corr(numeric_only=True)["price"]
 
 ```
 
@@ -129,7 +131,7 @@ Identify the name of the predictor column with the strongest correlation below.
 
 ```python
 # Replace None with appropriate code
-most_correlated = None
+most_correlated = "carat"
 ```
 
 The following code checks that you specified a column correctly:
@@ -164,8 +166,8 @@ Declare `y` and `X_baseline` variables, where `y` is a Series containing `price`
 
 ```python
 # Replace None with appropriate code
-y = None
-X_baseline = None
+y = diamonds["price"]
+X_baseline = diamonds[[most_correlated]]
 ```
 
 The following code checks that you created valid `y` and `X_baseline` variables:
@@ -209,14 +211,18 @@ Write any necessary code to evaluate the model performance overall and interpret
 
 
 ```python
-# Your code here
+print(baseline_results.summary())
 ```
 
 Then summarize your findings below:
 
 
 ```python
-# Your written answer here
+• Carat is the attribute most strongly correlated with price, and the regression describes this relationship directly.
+• The model is statistically significant and explains about 85% of the variance in diamond prices (R² = 0.849).
+• The intercept is approximately -$2,256, which means the model predicts a negative price for a zero-carat diamond. While not realistic, this occurs as a byproduct of the linear model.
+• The coefficient for carat is about $7,756, meaning that for each additional carat, the predicted price increases by around $7.8k
+
 ```
 
 <details>
@@ -257,7 +263,7 @@ Identify the name of the categorical predictor column you want to use in your mo
 
 ```python
 # Replace None with appropriate code
-cat_col = None
+cat_col = "cut"
 ```
 
 The following code checks that you specified a column correctly:
@@ -295,7 +301,7 @@ If we tried to pass `X_iterated` as-is into `sm.OLS`, we would get an error. We 
 # Replace None with appropriate code
 
 # Use pd.get_dummies to one-hot encode the categorical column in X_iterated
-X_iterated = None
+X_iterated = pd.get_dummies(X_iterated, columns=[cat_col])
 X_iterated
 ```
 
@@ -321,7 +327,11 @@ Now, applying your domain understanding, **choose a column to drop and drop it**
 
 
 ```python
-# Your code here
+# "Fair" is the worst cut so drop it 
+X_iterated.drop("cut_Fair", axis=1, inplace=True)
+# Remove the space in the Very Good column
+X_iterated.columns = X_iterated.columns.str.replace(' ', '')
+X_iterated
 
 ```
 
@@ -329,7 +339,10 @@ We now need to change the boolean values for the four "cut" column to 1s and 0s 
 
 
 ```python
-# Your code here
+X_iterated.cut_Good = X_iterated.cut_Good.replace({True:1, False:0})
+X_iterated.cut_Ideal = X_iterated.cut_Good.replace({True:1, False:0})
+X_iterated.cut_Premium = X_iterated.cut_Good.replace({True:1, False:0})
+X_iterated.cut_VeryGood = X_iterated.cut_VeryGood.replace({True:1, False:0})
 ```
 
 Now you should have 1 fewer column than before:
@@ -348,8 +361,8 @@ Using the `y` variable from our previous model and `X_iterated`, build a model c
 
 
 ```python
-# Your code here
-
+iterated_model = sm.OLS(y, sm.add_constant(X_iterated))
+iterated_results = iterated_model.fit()
 ```
 
 ## 6. Evaluate and Interpret Multiple Linear Regression Model Results
@@ -366,9 +379,34 @@ Summarize your findings below. How did the iterated model perform overall? How d
 
 Create as many additional cells as needed.
 
+```python
+# Iterated model performance
+"""
+• The iterated model performed very well, explaining a large portion of the variation in diamond prices.  
+• Its explanatory power is high (R² = 0.850, F-statistic = 1.022e+05, p < 0.001), showing strong statistical significance.  
+"""
+```
+```python
+# Comparison with baseline model
+"""
+• Compared to the baseline model, the iterated model performed better because it included both the numeric predictor (carat) and the categorical predictor (cut).  
+• This additional predictor improved interpretability and explanatory power.  
+"""
+```
 
 ```python
-# Your written answer here
+# Interpretation of coefficients
+"""
+• Intercept (const = -2205.7): The model predicts a negative price when carat = 0 and cut is the baseline category.  
+
+• Carat (≈ 7766.6): Each unit increase in carat size is associated with an increase in price of about 7,767 units, keeping cut constant. This is the strongest predictor in the model.  
+
+• Cut categories (relative to the baseline "Fair" cut):  
+   - Good: decreases price by about 154 units.  
+   - Ideal: decreases price by about 154 units.  
+   - Premium: decreases price by about 154 units.  
+   - Very Good: decreases price by about 75 units.  
+"""
 ```
 
 ## Summary
